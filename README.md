@@ -1,2 +1,2 @@
 # ARG
-AR Glasses
+AR Glasses - The ultimate smart glasses
