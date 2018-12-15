@@ -10,14 +10,14 @@ import time
 
 def signal_handler(sig, frame):
 	device.Clear()
-	y = 0
+	y = 2
 	print ('taking snapshot')
 	cam.capture('snapshot.jpg')
 
 	d = model.predict_by_filename('snapshot.jpg')
 
 	for i in d['outputs'][0]['data']['concepts']:
-		if(y<3):
+		if(y<5):
 			y = y+1
 			print (i['name'])
 			device.DrawString(30, y*10, i['name'], SSD1331.COLOR_WHITE)
@@ -38,4 +38,4 @@ cam = picamera.PiCamera()
 cam.resolution = (480, 360)
 
 signal.signal(signal.SIGTSTP, signal_handler)
-time.sleep(500)
+time.sleep(10000)

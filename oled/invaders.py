@@ -212,7 +212,7 @@ if __name__ == '__main__':
         device.Clear()
         time.sleep(0.1)
         device.DrawFullScreenBitMap(data_splash) # Splash screen.
-        time.sleep(3)
+        time.sleep(10)
         device.Clear()
         time.sleep(0.1)
         device.DrawLine(0, 61, 95, 61, SSD1331.COLOR_WHITE)
