@@ -40,8 +40,6 @@ def upload_file():
         res = requests.post(url=url_pushes, data=data, headers=headers)
 
 def signal_handler(sig, frame):
-        global clock
-        clock=False
         device.Clear()
         cam.resolution = (480, 360)
         y = 2
@@ -58,46 +56,13 @@ def signal_handler(sig, frame):
                         y = y+1
                         print (i['name'])
                         device.DrawString(15, y*10, i['name'], SSD1331.COLOR_WHITE)
-        time.sleep(5)
-        device.Clear()
-        clock=True
 
 SSD1331_PIN_CS  = 23
 SSD1331_PIN_DC  = 24
 SSD1331_PIN_RST = 25
 
-
-def posn(angle, arm_length):
-    dx = int(math.cos(math.radians(angle)) * arm_length)
-    dy = int(math.sin(math.radians(angle)) * arm_length)
-    return (dx, dy)
-
-def run_clock():
-        while True:
-                if clock:
-                        device.Clear()
-                        my_now = datetime.datetime.now()
-                        today_date = my_now.strftime("%b-%d")
-                        today_day = my_now.strftime("%a")
-                        today_time = my_now.strftime("%H:%M")
-                        device.DrawString(60, 20, str(today_time), SSD1331.COLOR_WHITE)
-                        device.DrawString(60, 30, str(today_date), SSD1331.COLOR_WHITE)
-                        device.DrawString(60, 40, str(today_day), SSD1331.COLOR_WHITE)
-                        hours_angle = 270 + (30 * (my_now.hour + (my_now.minute / 60.0)))
-                        hours_dx = int(math.cos(math.radians(hours_angle)) * 12)
-                        hours_dy = int(math.sin(math.radians(hours_angle)) * 12)
-                        minutes_angle = 270 + (6 * my_now.minute)
-                        minutes_dx = int(math.cos(math.radians(minutes_angle)) * 18)
-                        minutes_dy = int(math.sin(math.radians(minutes_angle)) * 18)
-                        device.DrawCircle(28, 32, 28, SSD1331.COLOR_RED)
-                        device.DrawLine(28, 32, 30 + hours_dx, 32 + hours_dy, SSD1331.COLOR_WHITE)
-                        device.DrawLine(28, 32, 30+ minutes_dx, 32 + minutes_dy, SSD1331.COLOR_WHITE)
-                        #device.DrawString(60, 28, today_time, SSD1331.COLOR_WHITE)
-                        time.sleep(3)
-
 def on_message(ws, raw):
-        global clock
-
+        flag=False
         device.Clear()
 
         data = json.loads(raw)
@@ -109,9 +74,14 @@ def on_message(ws, raw):
         except:
                 print ("Error in reading the type")
 
-        if type == "push":
-                clock=False
-                device.Clear()
+        if type == "push" and data['push']['type'] != "dismissal":
+                flag=True
+                try:
+                        if data['push']['push']['type'] == "dismissal":
+                                flag=False
+
+                except:
+                        print ("no field")
                 try:
                         application=data['push']['application_name']
                         device.DrawString(5, 20, application, SSD1331.COLOR_WHITE)
@@ -131,9 +101,6 @@ def on_message(ws, raw):
                 except:
                         print ("error in body")
 
-                time.sleep(5)
-                device.Clear()
-
         elif type == "tickle":
                 url_pushes = url_base+"pushes?modified_after="+str(modified)
                 response = requests.get(url=url_pushes, headers=headers)
@@ -143,9 +110,8 @@ def on_message(ws, raw):
                         modified = data['pushes'][0]['modified']
                 except:
                         print ("not a traditional push")
+                flag=True
                 for push in data['pushes']:
-                        clock=False
-                        device.Clear()
                         try:
                                 body=push['body'].rsplit('\n',1)[-1]
                                 print(body)
@@ -154,12 +120,28 @@ def on_message(ws, raw):
                                 else:
                                         device.DrawString(5, 20, "Message", SSD1331.COLOR_WHITE)
                                         device.DrawString(5, 30, body, SSD1331.COLOR_WHITE)
-                                        time.sleep(5)
-                                        device.Clear()
                         except:
                                 print ("error in reading message")
 
-        clock=True
+        if flag:
+                time.sleep(5)
+        device.Clear()
+        my_now = datetime.datetime.now()
+        today_date = my_now.strftime("%b-%d")
+        today_day = my_now.strftime("%a")
+        today_time = my_now.strftime("%H:%M")
+        device.DrawString(60, 20, str(today_time), SSD1331.COLOR_WHITE)
+        device.DrawString(60, 30, str(today_date), SSD1331.COLOR_WHITE)
+        device.DrawString(60, 40, str(today_day), SSD1331.COLOR_WHITE)
+        hours_angle = 270 + (30 * (my_now.hour + (my_now.minute / 60.0)))
+        hours_dx = int(math.cos(math.radians(hours_angle)) * 12)
+        hours_dy = int(math.sin(math.radians(hours_angle)) * 12)
+        minutes_angle = 270 + (6 * my_now.minute)
+        minutes_dx = int(math.cos(math.radians(minutes_angle)) * 18)
+        minutes_dy = int(math.sin(math.radians(minutes_angle)) * 18)
+        device.DrawCircle(28, 32, 28, SSD1331.COLOR_RED)
+        device.DrawLine(28, 32, 30 + hours_dx, 32 + hours_dy, SSD1331.COLOR_WHITE)
+        device.DrawLine(28, 32, 30+ minutes_dx, 32 + minutes_dy, SSD1331.COLOR_WHITE)
 
 def on_error(ws, error):
         print (error)
@@ -179,13 +161,13 @@ except:
         print ("error in clarifai")
 try:
         model = app.public_models.general_model
+        model.model_version = 'aa7f35c01e0642fda5cf400f543e7c40'
 except:
         print ("error in getting model")
 
-model.model_version = 'aa7f35c01e0642fda5cf400f543e7c40'
-
 device = SSD1331.SSD1331(SSD1331_PIN_DC, SSD1331_PIN_RST, SSD1331_PIN_CS)
 device.EnableDisplay(True)
+device.DrawString(5, 20, "TEST", SSD1331.COLOR_WHITE)
 device.Clear()
 
 cam = picamera.PiCamera()
@@ -198,10 +180,6 @@ modified = data['pushes'][0]['modified']
 #print (modified)
 
 signal.signal(signal.SIGTSTP, signal_handler)
-
-clock=True
-t1 = threading.Thread(target=run_clock, name='t1')
-t1.start()
 
 websocket.enableTrace(True)
 ws = websocket.WebSocketApp("wss://stream.pushbullet.com/websocket/"+your_access_token,
