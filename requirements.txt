@@ -1,0 +1,4 @@
+clarifai
+websocket
+json
+requests
