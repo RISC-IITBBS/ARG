@@ -16,6 +16,7 @@ import math
 
 your_access_token = "o.jd9hKkopWYUYLiyVOBnnHMeHYWH7A4EU"
 url_base = "https://api.pushbullet.com/v2/"
+clarifai_key = "a653edc0184247e0a6b61c556ca691a8"
 
 def upload_file():
         url_request = url_base+"upload-request"
@@ -156,7 +157,7 @@ headers = { 'Access-Token': your_access_token,
             'Content-Type': 'application/json'}
 
 try:
-        app = ClarifaiApp(api_key='a653edc0184247e0a6b61c556ca691a8')
+        app = ClarifaiApp(api_key=clarifai_key)
 except:
         print ("error in clarifai")
 try:
